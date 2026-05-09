@@ -19,22 +19,36 @@ async function apiRequest(endpoint, options = {}) {
     const config = {
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` })
         },
         ...options
     };
 
     try {
+        console.log(`API Request: ${config.method || 'GET'} ${url}`);
+        
         const response = await fetch(url, config);
         const data = await response.json();
 
+        console.log(`API Response: ${response.status}`, data);
+
         if (!response.ok) {
-            throw new Error(data.message || 'API request failed');
+            const errorMessage = data.message || data.error || 'API request failed';
+            const error = new Error(errorMessage);
+            error.response = { status: response.status, data };
+            throw error;
         }
 
         return data;
     } catch (error) {
         console.error('API Error:', error);
+        
+        // Handle network errors
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            throw new Error('Network error. Please check your internet connection and ensure the backend server is running.');
+        }
+        
         throw error;
     }
 }
@@ -45,10 +59,33 @@ async function apiRequest(endpoint, options = {}) {
 
 // Register user
 async function registerUser(userData) {
-    return await apiRequest('/register', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-    });
+    try {
+        console.log('Sending registration request to:', `${API_BASE_URL}/register`);
+        console.log('User data:', userData);
+        
+        const response = await apiRequest('/register', {
+            method: 'POST',
+            body: JSON.stringify(userData)
+        });
+        
+        console.log('Registration response:', response);
+        return response;
+    } catch (error) {
+        console.error('API registration error:', error);
+        
+        // Enhance error message with more details
+        if (error.message && error.message.includes('422')) {
+            const errorData = error.response?.data;
+            if (errorData && errorData.errors) {
+                const emailError = errorData.errors.email;
+                if (emailError) {
+                    throw new Error(`Email error: ${emailError[0]}`);
+                }
+            }
+        }
+        
+        throw error;
+    }
 }
 
 // Login user

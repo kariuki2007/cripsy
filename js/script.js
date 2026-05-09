@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 
 function initializeScrollAnimations() {
-    const elements = document.querySelectorAll('.shipping-card, .special-card, .value-card, .team-card, .reason-card, .product-card, .story-card');
+    const elements = document.querySelectorAll('.shipping-card, .special-card, .value-card, .team-card, .reason-card, .story-card');
     
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -380,6 +380,17 @@ async function handleRegisterSubmit(e) {
 
     try {
         showNotification('Creating your account...');
+        
+        // Debug: Log the user data being sent
+        console.log('Registration data:', {
+            name: fullname,
+            email: email,
+            password: password,
+            password_confirmation: confirmPassword,
+            phone: phone,
+            address: ''
+        });
+        
         const userData = {
             name: fullname,
             email: email,
@@ -398,7 +409,16 @@ async function handleRegisterSubmit(e) {
             }, 1500);
         }
     } catch (error) {
-        handleApiError(error, 'Registration failed. Please try again or use a different email.');
+        console.error('Registration error:', error);
+        
+        // Show more specific error messages
+        if (error.message && error.message.includes('email')) {
+            showError('Email already exists or is invalid. Please use a different email.');
+        } else if (error.message && error.message.includes('password')) {
+            showError('Password must be at least 8 characters and match confirmation.');
+        } else {
+            handleApiError(error, 'Registration failed. Please check all fields and try again.');
+        }
     }
 }
 
