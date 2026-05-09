@@ -1313,6 +1313,346 @@ body{
     transform: none;
 }
 
+/*wishlist page*/
+.wishlist-hero{
+    height: 30vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.wishlist-header{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.wishlist-content{
+    color: var(--text-color);
+}
+
+.wishlist-items-container{
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    min-height: 400px;
+}
+
+.empty-wishlist{
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-wishlist i{
+    font-size: 4rem;
+    color: rgba(244, 166, 29, 0.5);
+    margin-bottom: 20px;
+}
+
+.empty-wishlist h4{
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+}
+
+.empty-wishlist p{
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 25px;
+}
+
+.wishlist-item{
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.wishlist-item:hover{
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.wishlist-item-image{
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.wishlist-item-image i{
+    font-size: 2rem;
+    color: rgba(244, 166, 29, 0.5);
+}
+
+.wishlist-item-details{
+    flex: 1;
+}
+
+.wishlist-item-name{
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.wishlist-item-price{
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.wishlist-item-actions{
+    display: flex;
+    gap: 10px;
+}
+
+.wishlist-item-actions .btn{
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+.wishlist-summary{
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+}
+
+.summary-title{
+    color: var(--secondary-color);
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.summary-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.wishlist-actions{
+    margin-top: 20px;
+}
+
+.wishlist-actions .btn{
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.wishlist-actions .btn:hover{
+    transform: translateY(-2px);
+}
+
+/*order tracking page*/
+.order-tracking-hero{
+    height: 30vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.tracking-header{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.tracking-form-card{
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+}
+
+.form-title{
+    color: var(--secondary-color);
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.sms-notification-section{
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.sms-title{
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.sms-description{
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.order-details-card{
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+}
+
+.details-title{
+    color: var(--secondary-color);
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.order-info{
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.order-number{
+    color: var(--secondary-color);
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.order-meta{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meta-item{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.status-badge{
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-pending{
+    background: rgba(255, 193, 7, 0.2);
+    color: #fff;
+}
+
+.status-processing{
+    background: rgba(76, 175, 80, 0.2);
+    color: #fff;
+}
+
+.status-shipped{
+    background: rgba(13, 110, 253, 0.2);
+    color: #fff;
+}
+
+.status-delivered{
+    background: rgba(40, 167, 69, 0.2);
+    color: #fff;
+}
+
+.status-cancelled{
+    background: rgba(220, 53, 69, 0.2);
+    color: #fff;
+}
+
+.loading-spinner{
+    text-align: center;
+    padding: 40px;
+}
+
+.loading-spinner i{
+    font-size: 2rem;
+    color: var(--secondary-color);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin{
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.status-history{
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.history-title{
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.status-update{
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--secondary-color);
+}
+
+.status-info{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-time{
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.status-details{
+    flex: 1;
+}
+
+.status-phone{
+    font-size: 0.85rem;
+    color: rgba(76, 175, 80, 0.8);
+}
+
+.no-updates{
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+}
+
 /* ============================================
    ANIMATIONS & TRANSITIONS FOR MOBILE
    ============================================ */

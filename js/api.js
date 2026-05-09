@@ -189,6 +189,46 @@ async function deleteProduct(productId) {
 // ORDERS API
 // ============================================
 
+// Send order status SMS notification
+async function sendOrderStatusSMS(orderNumber, status, message, phoneNumber) {
+    try {
+        const response = await apiRequest('/orders/sms', {
+            method: 'POST',
+            body: JSON.stringify({
+                order_number: orderNumber,
+                status: status,
+                message: message,
+                phone_number: phoneNumber
+            })
+        });
+        
+        return response;
+    } catch (error) {
+        console.error('Failed to send SMS:', error);
+        throw error;
+    }
+}
+
+// Update order status with SMS
+async function updateOrderStatusWithSMS(orderNumber, status, message, sendSMS = true) {
+    try {
+        const response = await apiRequest('/orders/' + orderNumber + '/status', {
+            method: 'PUT',
+            body: JSON.stringify({
+                order_number: orderNumber,
+                status: status,
+                message: message,
+                send_sms: sendSMS
+            })
+        });
+        
+        return response;
+    } catch (error) {
+        console.error('Failed to update order status:', error);
+        throw error;
+    }
+}
+
 // Get user orders
 async function getOrders(params = {}) {
     const queryString = new URLSearchParams(params).toString();

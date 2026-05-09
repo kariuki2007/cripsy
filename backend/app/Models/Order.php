@@ -20,8 +20,10 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'shipped_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     public function user()
@@ -32,6 +34,11 @@ class Order extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function orderStatuses()
+    {
+        return $this->hasMany(OrderStatus::class);
     }
 
     public function getFormattedTotalAttribute()

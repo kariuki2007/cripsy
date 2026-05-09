@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use GuzzleHttp\Client;
 
 class AuthController extends Controller
 {
@@ -182,6 +183,88 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
             ]
         ]);
+    }
+
+    public function googleCallback(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid authorization code',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Exchange authorization code for access token
+            $client = new \GuzzleHttp\Client();
+            $response = $client->post('https://oauth2.googleapis.com/token', [
+                'form_params' => [
+                    'client_id' => env('GOOGLE_CLIENT_ID'),
+                    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+                    'code' => $request->code,
+                    'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
+                    'grant_type' => 'authorization_code',
+                ]
+            ]);
+
+            $tokenData = json_decode($response->getBody(), true);
+
+            if (!isset($tokenData['access_token'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to obtain access token'
+                ], 400);
+            }
+
+            // Get user info from Google
+            $userInfoResponse = $client->get('https://www.googleapis.com/oauth2/v2/userinfo', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $tokenData['access_token']
+                ]
+            ]);
+
+            $userInfo = json_decode($userInfoResponse->getBody(), true);
+
+            // Check if user already exists
+            $user = User::where('email', $userInfo['email'])->first();
+
+            if (!$user) {
+                // Create new user
+                $user = User::create([
+                    'name' => $userInfo['name'],
+                    'email' => $userInfo['email'],
+                    'provider' => 'google',
+                    'provider_id' => $userInfo['id'],
+                    'avatar' => $userInfo['picture'],
+                    'password' => Hash::make(uniqid()),
+                    'email_verified_at' => now(),
+                ]);
+            }
+
+            // Create Sanctum token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Google authentication successful',
+                'data' => [
+                    'user' => $user,
+                    'token' => $token,
+                    'token_type' => 'Bearer',
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Google authentication failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function logout(Request $request)

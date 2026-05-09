@@ -5,6 +5,9 @@
 // Shopping Cart Array
 let cart = JSON.parse(localStorage.getItem('crispyCart')) || [];
 
+// Wishlist Array
+let wishlist = JSON.parse(localStorage.getItem('crispyWishlist')) || [];
+
 // Initialize page on load
 document.addEventListener('DOMContentLoaded', function() {
     initializeCart();
@@ -16,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTouchAnimations();
     initializeLazyLoading();
     initializeCartPage();
+    initializeWishlistPage();
+    initializeOrderTracking();
     loadProductsFromAPI();
     updateAuthState();
 });
@@ -172,10 +177,26 @@ function updateCartDisplay() {
         }
     });
 
+    // Update wishlist display
+    const wishlistCount = wishlist.length;
+    const wishlistBadges = document.querySelectorAll('.wishlist-count');
+    wishlistBadges.forEach(badge => {
+        if (badge) {
+            badge.textContent = wishlistCount;
+            badge.style.display = wishlistCount > 0 ? 'block' : 'none';
+        }
+    });
+
     // Update cart page if on cart page
     if (window.location.pathname.includes('cart.html')) {
         renderCartItems();
         updateCartSummary();
+    }
+
+    // Update wishlist page if on wishlist page
+    if (window.location.pathname.includes('wishlist.html')) {
+        renderWishlistItems();
+        updateWishlistSummary();
     }
 }
 
@@ -657,58 +678,97 @@ async function logout() {
 // ============================================
 
 // Google OAuth Configuration
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with actual Google Client ID
-const GOOGLE_REDIRECT_URI = window.location.origin + '/auth/google/callback';
+const GOOGLE_CLIENT_ID = '123456789-abcdef.apps.googleusercontent.com'; // Replace with actual Google Client ID
+const GOOGLE_REDIRECT_URI = window.location.origin;
 
 // Facebook OAuth Configuration
-const FACEBOOK_APP_ID = 'YOUR_FACEBOOK_APP_ID'; // Replace with actual Facebook App ID
+const FACEBOOK_APP_ID = '9876543210987654321'; // Replace with actual Facebook App ID
 const FACEBOOK_API_VERSION = 'v18.0';
 
 // Initialize Google OAuth
 function initGoogleAuth() {
+    // Initialize when gapi is available
     if (typeof gapi !== 'undefined') {
         gapi.load('auth2', function() {
             gapi.auth2.init({
                 client_id: GOOGLE_CLIENT_ID,
-                scope: 'email profile'
+                scope: 'email profile',
+                ux_mode: 'popup'
             });
         });
     }
 }
 
-// Google Sign In
+// Simplified Google Sign In using OAuth 2.0 flow
 async function signInWithGoogle() {
     try {
         showNotification('Connecting to Google...');
         
-        if (typeof gapi !== 'undefined') {
-            const auth2 = gapi.auth2.getAuthInstance();
-            const user = await auth2.signIn();
-            
-            const userProfile = user.getBasicProfile();
-            const authResponse = user.getAuthResponse();
-            
-            await handleSocialAuth('google', {
-                id: userProfile.getId(),
-                name: userProfile.getName(),
-                email: userProfile.getEmail(),
-                avatar: userProfile.getImageUrl(),
-                token: authResponse.id_token
-            });
-        } else {
-            // Fallback to popup method
-            const popup = window.open(
-                `https://accounts.google.com/oauth/authorize?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(GOOGLE_REDIRECT_URI)}&response_type=token&scope=email profile`,
-                'google_auth',
-                'width=600,height=600'
-            );
-            
+        // Use OAuth 2.0 flow with popup
+        const authUrl = `https://accounts.google.com/oauth/authorize?` +
+            `client_id=${GOOGLE_CLIENT_ID}&` +
+            `redirect_uri=${encodeURIComponent(window.location.origin)}&` +
+            `response_type=code&` +
+            `scope=email profile&` +
+            `access_type=offline`;
+        
+        const popup = window.open(authUrl, 'google_auth', 'width=500,height=600');
+        
+        return new Promise((resolve, reject) => {
             const checkPopup = setInterval(() => {
                 if (popup.closed) {
                     clearInterval(checkPopup);
-                    showError('Google authentication cancelled');
+                    reject(new Error('Authentication cancelled'));
                 }
             }, 1000);
+            
+            // Listen for messages from popup
+            const messageHandler = (event) => {
+                if (event.source === popup && event.data.type === 'google_auth_success') {
+                    clearInterval(checkPopup);
+                    window.removeEventListener('message', messageHandler);
+                    popup.close();
+                    
+                    // Send auth code to backend
+                    handleGoogleAuthCode(event.data.code);
+                }
+            };
+            
+            window.addEventListener('message', messageHandler);
+        });
+    } catch (error) {
+        console.error('Google auth error:', error);
+        showError('Google authentication failed. Please try again.');
+    }
+}
+
+// Handle Google OAuth code from popup
+async function handleGoogleAuthCode(code) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/google/callback`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ code: code })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            localStorage.setItem('crispyUser', JSON.stringify({
+                ...data.data.user,
+                token: data.data.token,
+                loggedIn: true
+            }));
+            
+            showNotification('Successfully logged in with Google!');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Google authentication failed');
         }
     } catch (error) {
         console.error('Google auth error:', error);
@@ -1084,6 +1144,154 @@ function initializeCartPage() {
             });
         }
     }
+}
+
+// Initialize wishlist page
+function initializeWishlistPage() {
+    if (window.location.pathname.includes('wishlist.html')) {
+        renderWishlistItems();
+        updateWishlistSummary();
+        
+        // Initialize clear wishlist button
+        const clearWishlistBtn = document.querySelector('.btn-outline-secondary');
+        if (clearWishlistBtn) {
+            clearWishlistBtn.addEventListener('click', function() {
+                clearWishlist();
+            });
+        }
+
+        // Initialize add all to cart button
+        const addAllBtn = document.getElementById('add-all-to-cart-btn');
+        if (addAllBtn) {
+            addAllBtn.addEventListener('click', function() {
+                addAllWishlistToCart();
+            });
+        }
+    }
+}
+
+// Clear cart function
+function clearCart() {
+    cart = [];
+    localStorage.setItem('crispyCart', JSON.stringify(cart));
+    updateCartDisplay();
+    showNotification('Cart cleared successfully');
+}
+
+// Render wishlist items on wishlist page
+function renderWishlistItems() {
+    const wishlistItemsContainer = document.getElementById('wishlist-items');
+    if (!wishlistItemsContainer) return;
+
+    if (wishlist.length === 0) {
+        wishlistItemsContainer.innerHTML = `
+            <div class="empty-wishlist text-center py-5">
+                <i class="fa fa-heart fa-3x mb-3"></i>
+                <h4>Your wishlist is empty</h4>
+                <p class="text-muted">Start adding your favorite crispy treats to your wishlist!</p>
+                <a href="products.html" class="btn btn-primary btn-lg mt-3">
+                    <i class="fa fa-shopping-basket"></i> Browse Products
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    let wishlistHTML = '';
+    wishlist.forEach(item => {
+        wishlistHTML += `
+            <div class="wishlist-item" data-id="${item.id}">
+                <div class="wishlist-item-image">
+                    <i class="fa fa-image"></i>
+                </div>
+                <div class="wishlist-item-details">
+                    <div class="wishlist-item-name">${item.name}</div>
+                    <div class="wishlist-item-price">$${item.price}</div>
+                    <div class="wishlist-item-actions">
+                        <button class="btn btn-outline-primary btn-sm" onclick="addToCartFromWishlist(${item.id})">
+                            <i class="fa fa-shopping-cart"></i> Add to Cart
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeFromWishlist(${item.id})">
+                            <i class="fa fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    wishlistItemsContainer.innerHTML = wishlistHTML;
+}
+
+// Update wishlist summary
+function updateWishlistSummary() {
+    const totalItems = document.getElementById('wishlist-total-items');
+    const totalValue = document.getElementById('wishlist-total-value');
+    const addAllBtn = document.getElementById('add-all-to-cart-btn');
+    
+    if (totalItems) totalItems.textContent = wishlist.length;
+    if (totalValue) totalValue.textContent = '$' + wishlist.reduce((total, item) => total + item.price, 0).toFixed(2);
+    
+    if (addAllBtn) addAllBtn.disabled = wishlist.length === 0;
+}
+
+// Add item from wishlist to cart
+function addToCartFromWishlist(itemId) {
+    const wishlistItem = wishlist.find(item => item.id === itemId);
+    if (wishlistItem) {
+        // Add to cart
+        const existingItem = cart.find(item => item.id === itemId);
+        if (existingItem) {
+            existingItem.quantity++;
+        } else {
+            cart.push({
+                id: wishlistItem.id,
+                name: wishlistItem.name,
+                price: wishlistItem.price,
+                quantity: 1
+            });
+        }
+        
+        // Remove from wishlist
+        wishlist = wishlist.filter(item => item.id !== itemId);
+        localStorage.setItem('crispyWishlist', JSON.stringify(wishlist));
+        
+        // Update displays
+        updateCartDisplay();
+        if (window.location.pathname.includes('wishlist.html')) {
+            renderWishlistItems();
+            updateWishlistSummary();
+        }
+        
+        showNotification(`${wishlistItem.name} added to cart!`);
+    }
+}
+
+// Remove from wishlist
+function removeFromWishlist(itemId) {
+    wishlist = wishlist.filter(item => item.id !== itemId);
+    localStorage.setItem('crispyWishlist', JSON.stringify(wishlist));
+    
+    // Update displays
+    if (window.location.pathname.includes('wishlist.html')) {
+        renderWishlistItems();
+        updateWishlistSummary();
+    }
+    
+    showNotification('Item removed from wishlist');
+}
+
+// Clear wishlist
+function clearWishlist() {
+    wishlist = [];
+    localStorage.setItem('crispyWishlist', JSON.stringify(wishlist));
+    
+    if (window.location.pathname.includes('wishlist.html')) {
+        renderWishlistItems();
+        updateWishlistSummary();
+    }
+    
+    showNotification('Wishlist cleared successfully');
 }
 
 // Process checkout with backend API

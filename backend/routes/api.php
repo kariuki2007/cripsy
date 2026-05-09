@@ -26,6 +26,7 @@ Route::prefix('v1')->group(function () {
     // Social authentication routes
     Route::post('/auth/google', [AuthController::class, 'googleAuth']);
     Route::post('/auth/facebook', [AuthController::class, 'facebookAuth']);
+    Route::post('/auth/google/callback', [AuthController::class, 'googleCallback']);
 
     // Product routes (public)
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
@@ -50,6 +51,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus'])
         ->middleware('admin');
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+    Route::post('/orders/sms', [OrderController::class, 'sendOrderStatusSMS']);
 });
 
 // Health check route
