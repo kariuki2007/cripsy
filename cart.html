@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Register - Crispy</title>
+        <title>Shopping Cart - Crispy</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
@@ -44,8 +44,15 @@
                             <a class="nav-link" href="contact.html">CONTACTS</a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link active" href="cart.html">
+                                <i class="fa fa-shopping-cart"></i> CART
+                                <span class="cart-count">0</span>
+                            </a>
+                        </li>
+
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle active" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user"></i> ACCOUNT
                             </a>
                             <ul class="dropdown-menu glass-dropdown" aria-labelledby="accountDropdown">
@@ -61,77 +68,84 @@
             </div>
         </nav>
 
-        <!--register section-->
-        <section class="auth-section py-5">
+        <!--cart hero section-->
+        <section class="cart-hero py-5">
             <div class="container">
-                <div class="row justify-content-center align-items-center min-vh-100">
-                    <div class="col-md-6 col-lg-5">
-                        <div class="auth-card">
-                            <div class="auth-header text-center mb-4">
-                                <h2 class="fw-bold">Join Crispy Club</h2>
-                                <p class="lead">Create your account and start enjoying crispy treats</p>
+               <div class="cart-header align-items-center text-center">
+                <h2 class="display-4 fw-bold">Shopping Cart</h2>
+                <p class="lead">Review your delicious selections</p>
+               </div>
+            </div>
+        </section>
+
+        <!--cart content section-->
+        <section class="cart-content py-5">
+            <div class="container">
+                <div class="row">
+                    <!-- Cart Items -->
+                    <div class="col-lg-8">
+                        <div class="cart-items-container">
+                            <!-- Cart items will be dynamically inserted here -->
+                            <div id="cart-items">
+                                <!-- Empty cart message -->
+                                <div class="empty-cart text-center py-5" id="empty-cart">
+                                    <i class="fa fa-shopping-cart fa-3x mb-3" style="color: rgba(244, 166, 29, 0.5);"></i>
+                                    <h4>Your cart is empty</h4>
+                                    <p class="text-muted">Looks like you haven't added any delicious treats yet!</p>
+                                    <a href="products.html" class="btn btn-primary btn-lg mt-3">
+                                        <i class="fa fa-shopping-basket"></i> Start Shopping
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="col-lg-4">
+                        <div class="cart-summary">
+                            <div class="summary-card">
+                                <h4 class="summary-title">Order Summary</h4>
+                                
+                                <div class="summary-row">
+                                    <span>Subtotal:</span>
+                                    <span id="subtotal">$0.00</span>
+                                </div>
+                                
+                                <div class="summary-row">
+                                    <span>Shipping:</span>
+                                    <span id="shipping">$0.00</span>
+                                </div>
+                                
+                                <div class="summary-divider"></div>
+                                
+                                <div class="summary-row total">
+                                    <span>Total:</span>
+                                    <span id="total">$0.00</span>
+                                </div>
+
+                                <div class="shipping-note">
+                                    <i class="fa fa-truck"></i>
+                                    <small>Free shipping on orders over $50!</small>
+                                </div>
+
+                                <div class="cart-actions">
+                                    <a href="products.html" class="btn btn-outline-secondary w-100 mb-3">
+                                        <i class="fa fa-arrow-left"></i> Continue Shopping
+                                    </a>
+                                    <button class="btn btn-primary w-100" id="checkout-btn" disabled>
+                                        <i class="fa fa-credit-card"></i> Proceed to Checkout
+                                    </button>
+                                </div>
                             </div>
 
-                            <form class="auth-form">
-                                <div class="mb-3">
-                                    <label class="form-label" for="fullname">Full Name</label>
-                                    <div class="form-group">
-                                        <input type="text" class="form-control auth-input" id="fullname" placeholder="Enter your full name" required>
-                                    </div>
+                            <!-- Promo Code -->
+                            <div class="promo-card mt-4">
+                                <h5 class="promo-title">Promo Code</h5>
+                                <div class="promo-input-group">
+                                    <input type="text" class="form-control promo-input" placeholder="Enter promo code">
+                                    <button class="btn btn-outline-primary promo-btn">Apply</button>
                                 </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="email">Email Address</label>
-                                    <div class="form-group">
-                                        <input type="email" class="form-control auth-input" id="email" placeholder="Enter your email" required>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="phone">Phone Number</label>
-                                    <div class="form-group">
-                                        <input type="tel" class="form-control auth-input" id="phone" placeholder="Enter your phone number" required>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="password">Password</label>
-                                    <div class="form-group">
-                                        <input type="password" class="form-control auth-input" id="password" placeholder="Enter your password" required>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="confirm-password">Confirm Password</label>
-                                    <div class="form-group">
-                                        <input type="password" class="form-control auth-input" id="confirm-password" placeholder="Confirm your password" required>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="terms" required>
-                                    <label class="form-check-label" for="terms">
-                                        I agree to the <a href="#" class="auth-link">terms and conditions</a>
-                                    </label>
-                                </div>
-
-                                <button type="submit" class="btn btn-auth w-100 mb-3">Register</button>
-
-                                <div class="text-center">
-                                    <p class="mb-0">Already have an account? <a href="login.html" class="auth-link">Login here</a></p>
-                                </div>
-                            </form>
-
-                            <div class="divider my-4">
-                                <span>OR</span>
                             </div>
-
-                            <button class="btn btn-social w-100 mb-2">
-                                <i class="fa fa-google"></i> Sign up with Google
-                            </button>
-                            <button class="btn btn-social w-100">
-                                <i class="fa fa-facebook"></i> Sign up with Facebook
-                            </button>
                         </div>
                     </div>
                 </div>

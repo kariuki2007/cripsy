@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeScrollAnimations();
     initializeTouchAnimations();
     initializeLazyLoading();
+    initializeCartPage();
+    loadProductsFromAPI();
+    updateAuthState();
 });
 
 // ============================================
@@ -158,13 +161,21 @@ function initializeCart() {
 
 // Update cart display
 function updateCartDisplay() {
-    const cartCount = cart.length;
-    const cartBadge = document.querySelector('.cart-count');
-    if (cartBadge) {
-        cartBadge.textContent = cartCount;
-        cartBadge.style.display = cartCount > 0 ? 'block' : 'none';
-        cartBadge.classList.add('pulse');
-        setTimeout(() => cartBadge.classList.remove('pulse'), 600);
+    const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+    const cartBadges = document.querySelectorAll('.cart-count');
+    cartBadges.forEach(cartBadge => {
+        if (cartBadge) {
+            cartBadge.textContent = cartCount;
+            cartBadge.style.display = cartCount > 0 ? 'block' : 'none';
+            cartBadge.classList.add('pulse');
+            setTimeout(() => cartBadge.classList.remove('pulse'), 600);
+        }
+    });
+
+    // Update cart page if on cart page
+    if (window.location.pathname.includes('cart.html')) {
+        renderCartItems();
+        updateCartSummary();
     }
 }
 
@@ -291,7 +302,7 @@ function initializeFormValidation() {
     });
 }
 
-function handleLoginSubmit(e) {
+async function handleLoginSubmit(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value.trim();
@@ -312,18 +323,22 @@ function handleLoginSubmit(e) {
         return;
     }
 
-    localStorage.setItem('crispyUser', JSON.stringify({
-        email: email,
-        loggedIn: true
-    }));
-
-    showNotification('Login successful!');
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 1500);
+    try {
+        showNotification('Logging in...');
+        const response = await loginUser({ email, password });
+        
+        if (response.success) {
+            showNotification('Login successful!');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+    } catch (error) {
+        handleApiError(error, 'Login failed. Please check your credentials and try again.');
+    }
 }
 
-function handleRegisterSubmit(e) {
+async function handleRegisterSubmit(e) {
     e.preventDefault();
     
     const fullname = document.getElementById('fullname').value.trim();
@@ -363,17 +378,28 @@ function handleRegisterSubmit(e) {
         return;
     }
 
-    localStorage.setItem('crispyUser', JSON.stringify({
-        fullname: fullname,
-        email: email,
-        phone: phone,
-        loggedIn: true
-    }));
-
-    showNotification('Registration successful!');
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 1500);
+    try {
+        showNotification('Creating your account...');
+        const userData = {
+            name: fullname,
+            email: email,
+            password: password,
+            password_confirmation: confirmPassword,
+            phone: phone,
+            address: '' // Optional field
+        };
+        
+        const response = await registerUser(userData);
+        
+        if (response.success) {
+            showNotification('Registration successful! You are now logged in.');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+    } catch (error) {
+        handleApiError(error, 'Registration failed. Please try again or use a different email.');
+    }
 }
 
 function handleContactSubmit(e) {
@@ -552,6 +578,370 @@ window.addEventListener('resize', function() {
 // EXPORT FUNCTIONS FOR GLOBAL ACCESS
 // ============================================
 
+// ============================================
+// AUTHENTICATION STATE MANAGEMENT
+// ============================================
+
+// Update authentication state in navigation
+function updateAuthState() {
+    const user = JSON.parse(localStorage.getItem('crispyUser'));
+    const accountDropdown = document.getElementById('accountDropdown');
+    
+    if (accountDropdown && user && user.loggedIn) {
+        const dropdownMenu = accountDropdown.nextElementSibling;
+        if (dropdownMenu) {
+            dropdownMenu.innerHTML = `
+                <li><a href="#" class="dropdown-item" onclick="showUserProfile()">Profile</a></li>
+                <li><a href="#" class="dropdown-item" onclick="logout()">Logout</a></li>
+            `;
+        }
+        
+        // Update dropdown text to show user name
+        accountDropdown.innerHTML = `<i class="fa fa-user"></i> ${user.name || user.email}`;
+    }
+}
+
+// Show user profile
+async function showUserProfile() {
+    try {
+        const response = await getUserProfile();
+        if (response.success) {
+            const user = response.data.user;
+            showNotification(`Welcome, ${user.name}! Email: ${user.email}`);
+        }
+    } catch (error) {
+        handleApiError(error, 'Failed to load profile');
+    }
+}
+
+// Logout user
+async function logout() {
+    try {
+        await logoutUser();
+        showNotification('Logged out successfully');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    } catch (error) {
+        // Even if API logout fails, clear local storage
+        localStorage.removeItem('crispyUser');
+        showNotification('Logged out successfully');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    }
+}
+
+// ============================================
+// API INTEGRATION
+// ============================================
+
+// Load products from API
+async function loadProductsFromAPI() {
+    if (!window.location.pathname.includes('products.html')) return;
+    
+    try {
+        const response = await getProducts();
+        if (response.success && response.data.products) {
+            renderProducts(response.data.products);
+        }
+    } catch (error) {
+        console.error('Failed to load products:', error);
+        // Fallback to static products if API fails
+        showNotification('Using offline mode - products loaded from cache');
+    }
+}
+
+// Render products from API
+function renderProducts(products) {
+    const productsContainer = document.querySelector('.products-section .row');
+    if (!productsContainer) return;
+
+    let productsHTML = '';
+    products.forEach(product => {
+        const badge = product.badge ? `<span class="product-badge ${product.badge}">${product.badge.charAt(0).toUpperCase() + product.badge.slice(1)}</span>` : '';
+        const originalPrice = product.original_price ? `<span class="original-price">$${product.original_price}</span>` : '';
+        const stars = generateStarRating(product.rating);
+        
+        productsHTML += `
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="product-card">
+                    <div class="product-image">
+                        <i class="fa fa-image"></i>
+                        ${badge}
+                    </div>
+                    <div class="product-info">
+                        <h5 class="product-name">${product.name}</h5>
+                        <p class="product-description">${product.description}</p>
+                        <div class="product-rating">
+                            ${stars}
+                            <span class="rating-count">(${product.review_count} reviews)</span>
+                        </div>
+                        <div class="product-price mb-3">
+                            ${originalPrice}
+                            <span class="price">$${product.price}</span>
+                        </div>
+                        <button class="btn btn-product w-100" onclick="addToCartFromAPI(${product.id}, '${product.name}', ${product.price})">
+                            <i class="fa fa-shopping-cart"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    productsContainer.innerHTML = productsHTML;
+    
+    // Re-initialize cart functionality for new buttons
+    initializeCart();
+}
+
+// Generate star rating HTML
+function generateStarRating(rating) {
+    let stars = '';
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="fa fa-star"></i>';
+    }
+    
+    if (hasHalfStar) {
+        stars += '<i class="fa fa-star-half-o"></i>';
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="fa fa-star-o"></i>';
+    }
+    
+    return stars;
+}
+
+// Add to cart from API product
+function addToCartFromAPI(productId, productName, productPrice) {
+    const product = {
+        id: productId,
+        name: productName,
+        price: productPrice,
+        quantity: 1
+    };
+
+    // Check if product already exists in cart
+    const existingProduct = cart.find(item => item.id === productId);
+    if (existingProduct) {
+        existingProduct.quantity++;
+    } else {
+        cart.push(product);
+    }
+
+    // Save to localStorage
+    localStorage.setItem('crispyCart', JSON.stringify(cart));
+    
+    // Show notification with animation
+    showNotification(`${productName} added to cart!`);
+    updateCartDisplay();
+    
+    // Add ripple effect
+    if (event && event.target) {
+        addRippleEffect(event.target);
+    }
+}
+
+// ============================================
+// CART PAGE FUNCTIONS
+// ============================================
+
+// Render cart items on cart page
+function renderCartItems() {
+    const cartItemsContainer = document.getElementById('cart-items');
+    if (!cartItemsContainer) return;
+
+    if (cart.length === 0) {
+        cartItemsContainer.innerHTML = `
+            <div class="empty-cart text-center py-5">
+                <i class="fa fa-shopping-cart fa-3x mb-3"></i>
+                <h4>Your cart is empty</h4>
+                <p class="text-muted">Looks like you haven't added any delicious treats yet!</p>
+                <a href="products.html" class="btn btn-primary btn-lg mt-3">
+                    <i class="fa fa-shopping-basket"></i> Start Shopping
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    let cartHTML = '';
+    cart.forEach(item => {
+        const subtotal = (item.price * item.quantity).toFixed(2);
+        cartHTML += `
+            <div class="cart-item" data-id="${item.id}">
+                <div class="cart-item-image">
+                    <i class="fa fa-image"></i>
+                </div>
+                <div class="cart-item-details">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-price">$${item.price}</div>
+                    <div class="cart-item-quantity">
+                        <button class="quantity-btn" onclick="decreaseQuantity(${item.id})">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                        <input type="number" class="quantity-input" value="${item.quantity}" 
+                               onchange="updateQuantityFromInput(${item.id}, this.value)" min="1">
+                        <button class="quantity-btn" onclick="increaseQuantity(${item.id})">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="cart-item-subtotal">
+                    <div class="cart-item-subtotal-price">$${subtotal}</div>
+                    <button class="remove-item" onclick="removeFromCart(${item.id})">
+                        <i class="fa fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    cartItemsContainer.innerHTML = cartHTML;
+}
+
+// Update cart summary
+function updateCartSummary() {
+    const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const shipping = subtotal >= 50 ? 0 : 5.99;
+    const total = subtotal + shipping;
+
+    const subtotalElement = document.getElementById('subtotal');
+    const shippingElement = document.getElementById('shipping');
+    const totalElement = document.getElementById('total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    if (subtotalElement) subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+    if (shippingElement) shippingElement.textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+    if (totalElement) totalElement.textContent = `$${total.toFixed(2)}`;
+    if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
+}
+
+// Increase quantity
+function increaseQuantity(productId) {
+    const item = cart.find(item => item.id === productId);
+    if (item) {
+        item.quantity++;
+        localStorage.setItem('crispyCart', JSON.stringify(cart));
+        updateCartDisplay();
+    }
+}
+
+// Decrease quantity
+function decreaseQuantity(productId) {
+    const item = cart.find(item => item.id === productId);
+    if (item && item.quantity > 1) {
+        item.quantity--;
+        localStorage.setItem('crispyCart', JSON.stringify(cart));
+        updateCartDisplay();
+    }
+}
+
+// Update quantity from input
+function updateQuantityFromInput(productId, newQuantity) {
+    const quantity = parseInt(newQuantity);
+    if (quantity > 0) {
+        const item = cart.find(item => item.id === productId);
+        if (item) {
+            item.quantity = quantity;
+            localStorage.setItem('crispyCart', JSON.stringify(cart));
+            updateCartDisplay();
+        }
+    }
+}
+
+// Initialize cart page
+function initializeCartPage() {
+    if (window.location.pathname.includes('cart.html')) {
+        renderCartItems();
+        updateCartSummary();
+        
+        // Initialize promo code
+        const promoBtn = document.querySelector('.promo-btn');
+        if (promoBtn) {
+            promoBtn.addEventListener('click', function() {
+                const promoInput = document.querySelector('.promo-input');
+                if (promoInput && promoInput.value.trim()) {
+                    showNotification('Promo code applied successfully!');
+                    promoInput.value = '';
+                } else {
+                    showError('Please enter a promo code');
+                }
+            });
+        }
+
+        // Initialize checkout button
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', async function() {
+                if (cart.length > 0) {
+                    await processCheckout();
+                }
+            });
+        }
+    }
+}
+
+// Process checkout with backend API
+async function processCheckout() {
+    if (!isAuthenticated()) {
+        showNotification('Please login to continue with checkout');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 1500);
+        return;
+    }
+
+    try {
+        showNotification('Processing your order...');
+        
+        const orderItems = cart.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity
+        }));
+
+        const orderData = {
+            items: orderItems,
+            shipping_address: '123 Default Address, Default City, USA', // You can make this dynamic
+            notes: 'Order from web frontend'
+        };
+
+        const response = await createOrder(orderData);
+        
+        if (response.success) {
+            // Clear cart after successful order
+            cart = [];
+            localStorage.setItem('crispyCart', JSON.stringify(cart));
+            updateCartDisplay();
+            
+            showNotification('Order placed successfully! Order #' + response.data.order.order_number);
+            
+            // Redirect to order confirmation or orders page
+            setTimeout(() => {
+                window.location.href = 'index.html'; // Change to order confirmation page when available
+            }, 2000);
+        }
+    } catch (error) {
+        handleApiError(error, 'Failed to place order. Please try again.');
+    }
+}
+
+// ============================================
+// EXPORT FUNCTIONS FOR GLOBAL ACCESS
+// ============================================
+
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.updateCartQuantity = updateCartQuantity;
+window.increaseQuantity = increaseQuantity;
+window.decreaseQuantity = decreaseQuantity;
+window.updateQuantityFromInput = updateQuantityFromInput;
+window.updateAuthState = updateAuthState;
+window.showUserProfile = showUserProfile;
+window.logout = logout;
