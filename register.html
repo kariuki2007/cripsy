@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Register - Crispy</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+        <script src="https://use.fontawesome.com/d79a9c14ef.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+        
+        <!--navigation bar-->
+        <nav class="navbar navbar-expand-lg glass-navbar fixed-top">
+            <div class="container">
+                <!--logo-->
+                <a class="navbar-brand  fw-bold" href="index.html">CRISPY</a>
+
+                <!--toggle button-->
+                <button class="navbar-toggler text-white border-0" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!--links-->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">HOME</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="products.html">PRODUCTS</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="about.html">ABOUT US</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="contact.html">CONTACTS</a>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa fa-user"></i> ACCOUNT
+                            </a>
+                            <ul class="dropdown-menu glass-dropdown" aria-labelledby="accountDropdown">
+                                <li><a class="dropdown-item" href="login.html">Login</a></li>
+                                <li><a class="dropdown-item" href="register.html">Register</a></li>
+                            </ul>
+                        </li>
+
+                        
+                    </ul>
+                </div>
+
+            </div>
+        </nav>
+
+        <!--register section-->
+        <section class="auth-section py-5">
+            <div class="container">
+                <div class="row justify-content-center align-items-center min-vh-100">
+                    <div class="col-md-6 col-lg-5">
+                        <div class="auth-card">
+                            <div class="auth-header text-center mb-4">
+                                <h2 class="fw-bold">Join Crispy Club</h2>
+                                <p class="lead">Create your account and start enjoying crispy treats</p>
+                            </div>
+
+                            <form class="auth-form">
+                                <div class="mb-3">
+                                    <label class="form-label" for="fullname">Full Name</label>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control auth-input" id="fullname" placeholder="Enter your full name" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="email">Email Address</label>
+                                    <div class="form-group">
+                                        <input type="email" class="form-control auth-input" id="email" placeholder="Enter your email" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="phone">Phone Number</label>
+                                    <div class="form-group">
+                                        <input type="tel" class="form-control auth-input" id="phone" placeholder="Enter your phone number" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="password">Password</label>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control auth-input" id="password" placeholder="Enter your password" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="confirm-password">Confirm Password</label>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control auth-input" id="confirm-password" placeholder="Confirm your password" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        I agree to the <a href="#" class="auth-link">terms and conditions</a>
+                                    </label>
+                                </div>
+
+                                <button type="submit" class="btn btn-auth w-100 mb-3">Register</button>
+
+                                <div class="text-center">
+                                    <p class="mb-0">Already have an account? <a href="login.html" class="auth-link">Login here</a></p>
+                                </div>
+                            </form>
+
+                            <div class="divider my-4">
+                                <span>OR</span>
+                            </div>
+
+                            <button class="btn btn-social w-100 mb-2">
+                                <i class="fa fa-google"></i> Sign up with Google
+                            </button>
+                            <button class="btn btn-social w-100">
+                                <i class="fa fa-facebook"></i> Sign up with Facebook
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--footer-->
+        <footer class="bg-dark text-white py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h3>Crispy Club</h3>
+                        <p>Your favorite Crispy Club!</p>
+                        <div class="mt-3 media-icons">
+                            <a href="#"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+                            <a href="#"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+                            <a href="#"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+                            <a href="#"><i class="fa fa-linkedin" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <h4>Contact Us</h4>
+                        <p>Email: info@crispyclub.com</p>
+                        <p>Phone: +1 (123) 456-7890</p>
+                        <p>Address: 123 Crispy Street, Snack City, USA</p>
+                        <div class="mt-3">
+                        <span>&copy; 2024 Crispy Club. All rights reserved.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <script src="js/script.js"></script>
+    </body>
+</html>
