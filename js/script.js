@@ -653,6 +653,184 @@ async function logout() {
 }
 
 // ============================================
+// SOCIAL AUTHENTICATION
+// ============================================
+
+// Google OAuth Configuration
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with actual Google Client ID
+const GOOGLE_REDIRECT_URI = window.location.origin + '/auth/google/callback';
+
+// Facebook OAuth Configuration
+const FACEBOOK_APP_ID = 'YOUR_FACEBOOK_APP_ID'; // Replace with actual Facebook App ID
+const FACEBOOK_API_VERSION = 'v18.0';
+
+// Initialize Google OAuth
+function initGoogleAuth() {
+    if (typeof gapi !== 'undefined') {
+        gapi.load('auth2', function() {
+            gapi.auth2.init({
+                client_id: GOOGLE_CLIENT_ID,
+                scope: 'email profile'
+            });
+        });
+    }
+}
+
+// Google Sign In
+async function signInWithGoogle() {
+    try {
+        showNotification('Connecting to Google...');
+        
+        if (typeof gapi !== 'undefined') {
+            const auth2 = gapi.auth2.getAuthInstance();
+            const user = await auth2.signIn();
+            
+            const userProfile = user.getBasicProfile();
+            const authResponse = user.getAuthResponse();
+            
+            await handleSocialAuth('google', {
+                id: userProfile.getId(),
+                name: userProfile.getName(),
+                email: userProfile.getEmail(),
+                avatar: userProfile.getImageUrl(),
+                token: authResponse.id_token
+            });
+        } else {
+            // Fallback to popup method
+            const popup = window.open(
+                `https://accounts.google.com/oauth/authorize?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(GOOGLE_REDIRECT_URI)}&response_type=token&scope=email profile`,
+                'google_auth',
+                'width=600,height=600'
+            );
+            
+            const checkPopup = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkPopup);
+                    showError('Google authentication cancelled');
+                }
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Google auth error:', error);
+        showError('Google authentication failed. Please try again.');
+    }
+}
+
+// Facebook Sign In
+async function signInWithFacebook() {
+    try {
+        showNotification('Connecting to Facebook...');
+        
+        if (typeof FB !== 'undefined') {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    FB.api('/me', { fields: 'name,email,picture' }, async (profile) => {
+                        await handleSocialAuth('facebook', {
+                            id: profile.id,
+                            name: profile.name,
+                            email: profile.email,
+                            avatar: profile.picture?.data?.url,
+                            token: response.authResponse.accessToken
+                        });
+                    });
+                } else {
+                    showError('Facebook authentication cancelled');
+                }
+            }, { scope: 'email,public_profile' });
+        } else {
+            // Fallback to popup method
+            const popup = window.open(
+                `https://www.facebook.com/${FACEBOOK_API_VERSION}/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=token&scope=email,public_profile`,
+                'facebook_auth',
+                'width=600,height=600'
+            );
+            
+            const checkPopup = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkPopup);
+                    showError('Facebook authentication cancelled');
+                }
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Facebook auth error:', error);
+        showError('Facebook authentication failed. Please try again.');
+    }
+}
+
+// Handle Social Authentication Response
+async function handleSocialAuth(provider, userData) {
+    try {
+        showNotification(`Creating account with ${provider}...`);
+        
+        const response = await fetch(`${API_BASE_URL}/auth/${provider}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                name: userData.name,
+                email: userData.email,
+                provider: provider,
+                provider_id: userData.id,
+                avatar: userData.avatar,
+                token: userData.token
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Store user data and token
+            localStorage.setItem('crispyUser', JSON.stringify({
+                ...data.data.user,
+                token: data.data.token,
+                loggedIn: true
+            }));
+            
+            showNotification(`Successfully logged in with ${provider}!`);
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } else {
+            throw new Error(data.message || `${provider} authentication failed`);
+        }
+    } catch (error) {
+        console.error('Social auth error:', error);
+        showError(`${provider} authentication failed. Please try again.`);
+    }
+}
+
+// Load Google OAuth SDK
+function loadGoogleSDK() {
+    const script = document.createElement('script');
+    script.src = 'https://apis.google.com/js/platform.js';
+    script.onload = initGoogleAuth;
+    document.head.appendChild(script);
+}
+
+// Load Facebook SDK
+function loadFacebookSDK() {
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId: FACEBOOK_APP_ID,
+            cookie: true,
+            xfbml: true,
+            version: FACEBOOK_API_VERSION
+        });
+    };
+    
+    (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = `https://connect.facebook.net/en_US/sdk.js`;
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+}
+
+// ============================================
 // API INTEGRATION
 // ============================================
 
@@ -965,3 +1143,8 @@ window.updateQuantityFromInput = updateQuantityFromInput;
 window.updateAuthState = updateAuthState;
 window.showUserProfile = showUserProfile;
 window.logout = logout;
+window.signInWithGoogle = signInWithGoogle;
+window.signInWithFacebook = signInWithFacebook;
+window.handleSocialAuth = handleSocialAuth;
+window.loadGoogleSDK = loadGoogleSDK;
+window.loadFacebookSDK = loadFacebookSDK;

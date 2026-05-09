@@ -53,8 +53,8 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => 'required|string|email',
+            'password' => 'required|string|min:6',
         ]);
 
         if ($validator->fails()) {
@@ -65,11 +65,60 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = User::where('email', $request->email)->first();
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+        $user = Auth::user();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'user' => $user,
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ]
+        ]);
+    }
+
+    public function googleAuth(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255',
+            'provider' => 'required|string',
+            'provider_id' => 'required|string',
+            'token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if user already exists with this provider
+        $user = User::where('provider', 'google')
+                   ->where('provider_id', $request->provider_id)
+                   ->first();
+
+        if (!$user) {
+            // Create new user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'provider' => 'google',
+                'provider_id' => $request->provider_id,
+                'avatar' => $request->avatar,
+                'password' => Hash::make(uniqid()), // Random password
+                'email_verified_at' => now(),
             ]);
         }
 
@@ -77,7 +126,56 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Login successful',
+            'message' => 'Google authentication successful',
+            'data' => [
+                'user' => $user,
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ]
+        ]);
+    }
+
+    public function facebookAuth(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255',
+            'provider' => 'required|string',
+            'provider_id' => 'required|string',
+            'token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if user already exists with this provider
+        $user = User::where('provider', 'facebook')
+                   ->where('provider_id', $request->provider_id)
+                   ->first();
+
+        if (!$user) {
+            // Create new user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'provider' => 'facebook',
+                'provider_id' => $request->provider_id,
+                'avatar' => $request->avatar,
+                'password' => Hash::make(uniqid()), // Random password
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Facebook authentication successful',
             'data' => [
                 'user' => $user,
                 'token' => $token,

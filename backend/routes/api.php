@@ -23,6 +23,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
+    // Social authentication routes
+    Route::post('/auth/google', [AuthController::class, 'googleAuth']);
+    Route::post('/auth/facebook', [AuthController::class, 'facebookAuth']);
+
     // Product routes (public)
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
     Route::get('/products/popular', [ProductController::class, 'popular']);

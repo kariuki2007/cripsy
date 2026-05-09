@@ -105,10 +105,10 @@
                                 <span>OR</span>
                             </div>
 
-                            <button class="btn btn-social w-100 mb-2">
+                            <button class="btn btn-social w-100 mb-2" onclick="signInWithGoogle()">
                                 <i class="fa fa-google"></i> Login with Google
                             </button>
-                            <button class="btn btn-social w-100">
+                            <button class="btn btn-social w-100" onclick="signInWithFacebook()">
                                 <i class="fa fa-facebook"></i> Login with Facebook
                             </button>
                         </div>
@@ -145,6 +145,13 @@
             </div>
         </footer>
 
+        <!-- Google OAuth SDK -->
+        <script src="https://apis.google.com/js/platform.js?onload=initGoogleAuth" async defer></script>
+        
+        <!-- Facebook SDK -->
+        <div id="fb-root"></div>
+        <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+        
         <script src="js/api.js"></script>
         <script src="js/script.js"></script>
     </body>
